@@ -1,6 +1,9 @@
 # NODE
 FROM node:10
 
+ENV MONGO_URI "mongodb+srv://cluster0-vif11.azure.mongodb.net/test --username rodney"
+ENV REDIS_URL "speckle-test-redis.redis.cache.windows.net:6380,password=BHn7l23hsWCieFjdMB9K6QPaxYL7nUIDlmjil4vOXWI=,ssl=True,abortConnect=False"
+
 # LABELS
 LABEL version="1.x.x"
 LABEL description="Speckle Server Docker Container Image"

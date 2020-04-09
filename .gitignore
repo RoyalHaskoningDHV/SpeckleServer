@@ -15,3 +15,4 @@ tree_out.txt
 .env
 
 terraform/.terraform
+tags
