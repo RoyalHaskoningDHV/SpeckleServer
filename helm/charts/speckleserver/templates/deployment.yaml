@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "speckleserver.fullname" . }}
+  labels:
+    {{- include "speckleserver.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "speckleserver.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "speckleserver.selectorLabels" . | nindent 8 }}
+    spec:
+    {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      serviceAccountName: {{ include "speckleserver.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["sleep", "3600"]
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+          # readinessProbe:
+          #   httpGet:
+          #     path: /
+          #     port: http
+          #   periodSeconds: 30
+          #   timeoutSeconds: 50
+          env:
+            - name: MONGODB_URI
+              value: "{{ .Values.mongoURI }}"
+            - name: REDIS_URL
+              value: "{{ .Values.redisURL }}"
+            - name: CANONICAL_URL
+              value: "https://{{ .Values.customer }}.{{ .Values.dns.baseDomain }}"
+            - name: PUBLIC_REGISTRATION
+              value: "{{ .Values.speckle.publicRegistration }}"
+            - name: ALLOW_INSECURE_REDIRECTS
+              value: "{{ .Values.speckle.allowInsecureRedirects }}"
+            - name: REDIRECT_URLS
+              value: https://{{ .Values.dns.baseDomain }},https://speckle.rhdhv.digital,https://excel.speckle.systems
+            - name: SERVER_NAME
+              value: "{{ .Values.customer }}.{{ .Values.dns.baseDomain }}"
+          volumeMounts:
+            - name: speckle-env
+              mountPath: /usr/src/app/.env
+              subPath: .env
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        - name: speckle-env
+          configMap:
+            name: {{ .Release.Name }}-configmap
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
